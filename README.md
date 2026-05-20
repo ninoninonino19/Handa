@@ -1,50 +1,99 @@
-# Welcome to your Expo app 👋
+# 🌧️ Handa – Disaster Preparedness App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile app for Filipino communities to report and monitor real-time hazards such as floods, storms, earthquakes, and landslides.
 
-## Get started
+## ✨ Features
 
-1. Install dependencies
+- 🗺️ Interactive map with severity-colored markers
+- 📸 User-submitted hazard reports with optional photos
+- 🔍 Searchable and filterable reports list
+- 🤖 AI assistant powered by Groq for short, actionable safety advice in Taglish
+- 📱 Mobile-friendly and community-centered design
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+# 📱 Run the App with Expo Go
 
-   ```bash
-   npx expo start
-   ```
+## Prerequisites
 
-In the output, you'll find options to open the app in a
+Make sure you have the following installed:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- [Node.js](https://nodejs.org/) (v18 or newer)
+- [Expo Go](https://expo.dev/go) on your iOS or Android device
+- A code editor such as VS Code
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+# 🚀 Getting Started
 
-When you're ready, run:
+## 1. Clone the Repository
 
 ```bash
-npm run reset-project
+git clone https://github.com/your-username/handa-disaster-app.git
+cd handa-disaster-app
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 2. Install Dependencies
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## 3. Set Up Environment Variables
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Create a `.env` file in the project root directory.
 
-## Join the community
+Use the following template and replace the placeholder values with your own keys:
 
-Join our community of developers creating universal apps.
+```env
+GROQ_API_KEY=your_groq_api_key_here
+EXPO_PUBLIC_BACKEND_URL=http://your-backend-url:3000
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Notes
+
+- `GROQ_API_KEY` is required for the AI assistant feature.
+- `EXPO_PUBLIC_BACKEND_URL` is optional and only needed if push notifications are enabled.
+- For basic app usage (map, reports, AI assistant), you may leave the backend URL empty.
+
+## 4. Start the Development Server
+
+```bash
+npx expo start --clear
+```
+
+## 5. Open the App on Your Device
+
+### Android
+- Open the Expo Go app
+- Scan the QR code displayed in the terminal or browser
+
+### iOS
+- Open the Camera app
+- Scan the QR code
+- Open the link using Expo Go
+
+---
+
+# 🛠️ Tech Stack
+
+- React Native
+- Expo
+- Groq API
+- JavaScript / TypeScript
+
+---
+
+# 📷 Sample Use Cases
+
+- Report flooding in your area
+- Monitor nearby hazards
+- View severity levels on the map
+- Ask the AI assistant for emergency tips
+- Browse recent community reports
+
+---
+
+# 📄 License
+
+This project is for educational and community preparedness purposes.
