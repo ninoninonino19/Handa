@@ -41,3 +41,37 @@ app-example
 # generated native folders
 /ios
 /android
+
+.env
+.env.*
+!.env.example
+src/config/
+*.key
+*.pem
+
+google-services.json
+
+# dependencies
+node_modules/
+
+# Expo / Metro
+.expo/
+.expo-shared/
+
+# Environment variables (secrets)
+.env
+.env.*
+!.env.example
+
+# Firebase config (if you added it)
+google-services.json
+GoogleService-Info.plist
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+
+# OS specific
+.DS_Store
+Thumbs.db

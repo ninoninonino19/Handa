@@ -1,98 +1,173 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator, Text, Alert, TouchableOpacity } from 'react-native';
+import MapView, { Marker, Region } from 'react-native-maps';
+import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import { useHazards } from '../../src/context/HazardContext';
+import { getPinColorBySeverity } from '../../src/utils/helpers';
+import HazardModal from '../../src/components/HazardModal';
+import ReportFormModal from '../../src/components/ReportFormModal';
+import AIChatModal from '../../src/components/AIChatModal';
+import { HazardReport } from '../../src/types/hazard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+type UserLocation = Region;
 
-export default function HomeScreen() {
+export default function MapScreen() {
+  const insets = useSafeAreaInsets();
+  const mapRef = useRef<MapView>(null);
+  const { hazards, loading, addUserReport } = useHazards();
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [selectedHazard, setSelectedHazard] = useState<HazardReport | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [aiModalVisible, setAiModalVisible] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Location permission denied');
+        Alert.alert('Permission needed', 'Enable location to see nearby hazards');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({});
+      const region = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.5,
+        longitudeDelta: 0.5,
+      };
+      setUserLocation(region);
+      if (mapRef.current) {
+        mapRef.current.animateToRegion(region, 1000);
+      }
+    })();
+  }, []);
+
+  const centerMapOnUser = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion(userLocation, 500);
+    } else {
+      Alert.alert('Location not available', 'Unable to get your current location.');
+    }
+  };
+
+  if (errorMsg) return <View style={styles.container}><Text>{errorMsg}</Text></View>;
+  if (!userLocation) return <View style={styles.container}><ActivityIndicator size="large" /><Text>Loading map...</Text></View>;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        region={userLocation}
+        showsUserLocation
+        showsMyLocationButton={false}
+      >
+        {hazards.map(hazard => (
+          <Marker
+            key={hazard.id}
+            coordinate={{ latitude: hazard.latitude, longitude: hazard.longitude }}
+            pinColor={getPinColorBySeverity(hazard.severity)}
+            onPress={() => { setSelectedHazard(hazard); setModalVisible(true); }}
+          />
+        ))}
+      </MapView>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <HazardModal visible={modalVisible} hazard={selectedHazard} onClose={() => setModalVisible(false)} />
+      <ReportFormModal visible={reportModalVisible} onClose={() => setReportModalVisible(false)} onSubmit={addUserReport} />
+      <AIChatModal visible={aiModalVisible} onClose={() => setAiModalVisible(false)} />
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
+
+      {/* Add Report Button (green, bottom‑left) */}
+      <TouchableOpacity
+        style={[styles.addButton, { bottom: insets.bottom + 20 }]}
+        onPress={() => setReportModalVisible(true)}
+      >
+        <Ionicons name="add" size={32} color="white" />
+      </TouchableOpacity>
+
+      {/* AI Assistant Button (blue, bottom‑center) */}
+      <TouchableOpacity
+        style={[styles.aiButton, { bottom: insets.bottom + 20 }]}
+        onPress={() => setAiModalVisible(true)}
+      >
+        <Ionicons name="chatbubble-ellipses" size={28} color="white" />
+      </TouchableOpacity>
+
+      {/* Locate Me Button (orange, bottom‑right) */}
+      <TouchableOpacity
+        style={[styles.locationButton, { bottom: insets.bottom + 20 }]}
+        onPress={centerMapOnUser}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="locate" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  container: { flex: 1 },
+  map: { flex: 1, width: '100%' },
+  loadingOverlay: {
     position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButton: {
+    position: 'absolute',
+    left: 20,
+    backgroundColor: '#4caf50',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  aiButton: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -28, // half of width
+    backgroundColor: '#2196f3',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  locationButton: {
+    position: 'absolute',
+    right: 20,
+    backgroundColor: '#ff5722',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });
